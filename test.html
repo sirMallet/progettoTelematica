@@ -14,8 +14,9 @@
       const urlInput = document.getElementById('urlInput');
       const url = urlInput.value;
       const linksList = document.getElementById('linksList');
+     
       linksList.innerHTML = ''; // Clear previous results
-      
+
       // Fetch the HTML content of the web page
       fetch(url)
         .then(response => response.text())
@@ -26,8 +27,15 @@
           
           // Extract all the <a> elements and their href attributes
           const links = doc.querySelectorAll('a');
-          const linkUrls = Array.from(links).map(link => link.href);
-          
+          const linkUrls = Array.from(links).map(link => {
+        let href = link.href;
+        // Remove the initial portion matching "http://127.0.0.1:5500" and replace it with urlInput
+        if (href.startsWith("http://127.0.0.1:5500")) {
+          href = urlInput.value + href.substring("http://127.0.0.1:5500".length);
+        }
+        return href;
+      });
+
           // Append the links to the linksList
           linkUrls.forEach(linkUrl => {
             const li = document.createElement('li');
