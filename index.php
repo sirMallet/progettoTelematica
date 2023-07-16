@@ -183,7 +183,7 @@
           $('#urlInfoModal').modal('show');
 
           // Get the status code
-          const statusCode = jqXHR.status;
+          var statusCode = jqXHR.status;
           if (jqXHR.statusText != "nocontent") {
             statusCode += " " + jqXHR.statusText;
           }
@@ -191,6 +191,7 @@
           // Get the available headers
           const headers = jqXHR.getAllResponseHeaders();
           const headersList = headers.split("\n");
+          console.log(headersList);
 
           // Create the table
           var markup = "<td class='align-middle'>";
