@@ -1,85 +1,88 @@
 <!doctype html>
-<html lang="en">
+<html lang="it">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ValURL</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
-  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
-
   <script>
-    var startTime;
+    var startTime; // Timer variables
     var elapsedTime;
-    var urlRecent = [];
+    var urlRecent = []; // Array that contains the last 5 URLs inserted
+    var okValid = false; // Boolean that checks if the URL is valid
 
-    function InviaInput() {
-      const urlInput = document.getElementById('formURL');
-      var tabella = document.getElementById("tabella-risultati");
-      var buttonDropdown = document.getElementById("buttonDropdown");
+    function manageInput() // Function that manages the input 
+    {
+      const url = document.getElementById('urlText').value;
+      const resultTable = document.getElementById("result-table");
+      const buttonDropdown = document.getElementById("buttonDropdown");
 
-      const url = urlInput.value;
+      var okADD = true;
+      var dropdown = document.getElementById("recentDropdown");
+      var markup = "";
 
+      // Check if the input is empty
       if (url == "") {
-        $('#modalIncorrect').modal('show');
-        tabella.innerHTML = "";
+        $('#modalEmpty').modal('show');
+        resultTable.innerHTML = "";
 
       } else {
         extractLinks();
 
-        var okADD = true;
-
+        // Check if the URL is already in the array
         for (i in urlRecent) {
           if (urlRecent[i] == url) {
             okADD = false;
           }
         }
-        if ((urlRecent.length == 5) && (okADD)) {
+
+        // Add the URL to the array
+        if ((urlRecent.length == 5) && (okADD) && (okValid)) {
           urlRecent.pop();
           urlRecent.unshift(url);
         } else if (okADD) {
           urlRecent.unshift(url);
         }
+
+        // Enable the dropdown button if there are URLs in the array
         if (urlRecent.length > 0) {
           buttonDropdown.setAttribute("data-bs-toggle", "dropdown")
+
+          // Create the dropdown menu
+          for (var i = 0; i < urlRecent.length; i++) {
+            if (urlRecent[i].length > 190) {
+              markup += "<li><button class='dropdown-item' type='button' id=" + i + " >" + urlRecent[i].substring(0, 190) + "..." + "</button></li>";
+            } else {
+              markup += "<li><button class='dropdown-item' type='button' id=" + i + " >" + urlRecent[i] + "</button></li>";
+            }
+          }
+
+          dropdown.innerHTML = markup;
         }
-        createDropdown();
       }
     }
-
-    function createDropdown() {
-      var dropdown = document.getElementById("dropdownRecenti");
-
-      var markup = "";
-      for (var i = 0; i < urlRecent.length; i++) {
-        if (urlRecent[i].length > 50) {
-          urlRecent[i] = urlRecent[i].substring(0, 190) + "...";
-        }
-        markup += "<li><button class='dropdown-item' type='button' id=" + i + " >" + urlRecent[i] + "</button></li>";
-      }
-
-      dropdown.innerHTML = markup;
-    }
-
 
     function extractLinks() {
-      var tabella = document.getElementById("tabella-risultati");
-      const urlText = document.getElementById('formURL').value;
+      var resultTable = document.getElementById("result-table");
+      const urlText = document.getElementById('urlText').value;
       url = new URL(urlText);
       const domain = url.hostname;
 
       // Fetch the HTML content of the web page
-      startTime = new Date().getTime(); // Registra il timestamp di inizio
-      var status;
+      startTime = new Date().getTime();
+      var statusCode;
 
       fetch(url)
         .then(response => {
-          var endTime = new Date().getTime(); // Registra il timestamp di fine
-          elapsedTime = endTime - startTime; // Calcola il tempo trascorso
+          var endTime = new Date().getTime();
+          elapsedTime = endTime - startTime; // Calc the elapsed time
 
-          status = response.status + response.statusText;
+          statusCode = response.status + response.statusText; // Get the status code
 
           return response.text();
         })
@@ -98,10 +101,13 @@
             return url.href;
           })
 
+          okValid = true;
+
+          // Create the table
           var markup = "<td class='align-middle'>";
           if ((url.protocol == 'https:') ? markup += "HTTPS Supportato" : markup += "HTTPS non Supportato");
 
-          markup += "; Load Time: " + elapsedTime + "ms; Status: " + status;
+          markup += "; Load Time: " + elapsedTime + "ms; Status: " + statusCode;
 
           markup += "</td>";
 
@@ -112,61 +118,84 @@
           for (var i = 0; i < linkUrls.length; i++) {
 
             markup += "<tr>";
-            markup += "<td class='align-left'> <button type='button' name='pulsanteEsaminaLink' class='btn' data-bs-toggle='modal' id='" + linkUrls[i] + "'>" + linkUrls[i] + "</button> </td>";
+            markup += "<td class='align-left'> <button type='button' name='examineButton' class='btn' data-bs-toggle='modal' id='" + linkUrls[i] + "'>" + linkUrls[i] + "</button> </td>";
             markup += "</tr>";
           }
 
-          tabella.innerHTML = markup;
+          resultTable.innerHTML = markup;
+          
         })
         .catch(error => {
-          tabella.innerHTML = "<td class='align-middle'>Nessun link disponibile</td>";
+          okValid = false;
+          // If the fetch fails, show an error modal
+
+          var modalNoGETBodyTextID = document.getElementById("modalNoGETBodyText");
+
+          var markup = "";
+          if ((error.status != undefined) && (error.statusText != undefined)) {
+            modalNoGETBodyTextID.innerHTML = "Non è possibile accedere alle informazioni di questo link. Errore: " + error.status + " " + error.statusText;
+          } else {
+            modalNoGETBodyTextID.innerHTML = "Non è possibile accedere alle informazioni di questo link.";
+          }
+
+          resultTable.innerHTML = "";
+          $('#modalNoGET').modal('show');
         });
     }
 
 
+    // Event listener for the sendButton
     $(document).on('click', 'button[name="sendButton"]', function() {
-      InviaInput();
+      manageInput();
     });
 
-    $(document).on('click', 'button[class="dropdown-item"]', function() {
-      var urlInput = document.getElementById('formURL');
-      var link = $(this).id();
-
-      urlInput.value = urlRecent[link];
-      InviaInput();
-    });
-
+    // Event listener for the send button when the user press enter
     document.addEventListener("keydown", function(event) {
       if (event.keyCode === 13) {
         event.preventDefault(); // Previene l'invio del modulo se presente
-        InviaInput()
+        manageInput()
       }
     });
 
-    $(document).on('click', 'button[name="pulsanteEsaminaLink"]', function() {
-      var url = $(this).attr('id');
-      var modaleInfoURLHeader = document.getElementById("modaleInfoURLHeader");
-      var headersID = document.getElementById("tabella-headersLink");
-      modaleInfoURLHeader.innerHTML = url;
+    // Event listener for the dropdown menu (when the element is selected)
+    $(document).on('click', 'button[class="dropdown-item"]', function() {
+      var urlInput = document.getElementById('urlText');
 
-      startTime = new Date().getTime(); // Registra il timestamp di inizio
+      urlInput.value = urlRecent[$(this).attr('id')];
+      manageInput();
+    });
+
+    // Event listener for links in the table to get more info
+    $(document).on('click', 'button[name="examineButton"]', function() {
+      var url = $(this).attr('id');
+      var examineTitle = document.getElementById("modalExamineTitle");
+      var headersTable = document.getElementById("headers-table");
+      examineTitle.innerHTML = url;
+
+      startTime = new Date().getTime();
       $.ajax({
         url: url,
         method: 'HEAD',
         success: function(data, textStatus, jqXHR) {
-          var endTime = new Date().getTime(); // Registra il timestamp di fine
-          var elapsedTimeElement = endTime - startTime; // Calcola il tempo trascorso
-          $('#modaleInfoURL').modal('show');
-          const status = jqXHR.status;
+          var endTime = new Date().getTime();
+          var elapsedTimeElement = endTime - startTime; // Calc the elapsed time
+
+          $('#urlInfoModal').modal('show');
+
+          // Get the status code
+          const statusCode = jqXHR.status;
           if (jqXHR.statusText != "nocontent") {
-            status += " " + jqXHR.statusText;
+            statusCode += " " + jqXHR.statusText;
           }
+
+          // Get the available headers
           const headers = jqXHR.getAllResponseHeaders();
           const headersList = headers.split("\n");
 
+          // Create the table
           var markup = "<td class='align-middle'>";
           if ((url.protocol == 'https:') ? markup += "HTTPS Supportato" : markup += "HTTPS non Supportato");
-          markup += "; Load Time: " + elapsedTimeElement + "ms; Status: " + status + "</td>";
+          markup += "; Load Time: " + elapsedTimeElement + "ms; Status: " + statusCode + "</td>";
 
           markup += "<tr><th>Headers</th></tr>";
 
@@ -176,14 +205,35 @@
             markup += "</tr>";
           }
 
-          headersID.innerHTML = markup;
+          headersTable.innerHTML = markup;
         },
 
         error: function(data, textStatus, jqXHR) {
-          $('#modalCORSPolicy').modal('show');
+          // If the ajax fails, show an error modal
+
+
+          var modalNoGETBodyTextID = document.getElementById("modalNoGETBodyText");
+
+          var markup = "";
+          if ((jqXHR.status != undefined) && (jqXHR.statusText != undefined)) {
+            modalNoGETBodyTextID.innerHTML = "Non è possibile accedere alle informazioni di questo link. Errore: " + error.status + " " + error.statusText;
+          } else {
+            modalNoGETBodyTextID.innerHTML = "Non è possibile accedere alle informazioni di questo link.";
+          }
+
+          $('#modalNoGET').modal('show');
         }
       });
+    });
 
+    // Event listener for the validate button in the modal
+    $(document).on('click', 'button[name="validateThis"]', function() {
+      var url = document.getElementById("modalExamineTitle").innerHTML;
+      var urlInput = document.getElementById('urlText');
+      $('#urlInfoModal').modal('hide');
+
+      urlInput.value = url;
+      manageInput();
     });
   </script>
 </head>
@@ -191,8 +241,7 @@
 <body>
   <div class="container-fluid" style="overflow: hidden;">
     <div class="col">
-
-      <!-- Title -->
+      <!-- Header -->
       <div class="row">
         <div class="col">
           <div class="card border-0">
@@ -203,15 +252,15 @@
         </div>
       </div>
 
-
+      <!-- Input -->
       <div class="row">
         <div class="col-md-11">
           <div class="card border-0">
             <div class="card-body">
               <div class="input-group">
-                <input type="url" autocomplete="off" class="form-control" id="formURL" name="formURL" placeholder="URL">
+                <input type="url" autocomplete="off" class="form-control" id="urlText" name="urlText" placeholder="URL">
                 <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="buttonDropdown" aria-expanded="false">Recenti</button>
-                <ul class="dropdown-menu" id="dropdownRecenti"></ul>
+                <ul class="dropdown-menu" id="recentDropdown"></ul>
               </div>
             </div>
           </div>
@@ -226,14 +275,13 @@
         </div>
       </div>
 
-      <!-- Body -->
+      <!-- Table -->
       <div class="row">
-        <!-- Table -->
-        <div class="col-md-12">
+        <div class="col">
           <div class="card">
             <div class="card-body">
               <div id="tabella" style="height: 70vh; overflow-y: auto;">
-                <table class='table table-hover' id="tabella-risultati">
+                <table class='table table-hover' id="result-table">
                 </table>
               </div>
             </div>
@@ -241,9 +289,9 @@
         </div>
       </div>
 
-
+      <!-- Footer -->
       <footer class="footer text-dark" style="position: sticky; bottom: 0;">
-        <div class="container">
+        <div class="container-fluid">
           <div class="row">
             <hr class="border-0">
             <div class="col-md-12">
@@ -253,68 +301,64 @@
           </div>
         </div>
       </footer>
-
-
-      <!-- Controls -->
-
-
-      <div class="modal fade bd-example-modal-xl" tabindex="-1" role="dialog" id="modaleInfoURL">
-        <div class="modal-dialog modal-xl">
-          <div class="modal-content">
-
-            <div class="modal-header">
-              <label id="modaleInfoURLHeader"></label>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi finestra modale"></button>
-            </div>
-
-            <div class="modal-body">
-              <div id="tabella">
-                <table class='table table-hover' id="tabella-headersLink">
-                </table>
-              </div>
-            </div>
-            <div class="modal-footer">
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
-
-
-    <div class="modal fade popconfirm-modal" tabindex="-1" role="dialog" id="modalIncorrect">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">URL errato</h5>
-          </div>
-          <div class="modal-body">
-            <p>L'url inserito non è corretto</p>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-primary btn-sm" type="button" data-bs-dismiss="modal">Ok</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal fade popconfirm-modal" tabindex="-1" role="dialog" id="modalCORSPolicy">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Errore</h5>
-          </div>
-          <div class="modal-body">
-            <p>A causa della politica CORS, non è possibile accedere alle informazioni di questo link.</p>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-primary btn-sm" type="button" data-bs-dismiss="modal">Ok</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div>
   </div>
 </body>
+
+<!-- Modals -->
+<div class="modal fade bd-example-modal-xl" tabindex="-1" role="dialog" id="urlInfoModal">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <label id="modalExamineTitle"></label>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div id="tabella">
+          <table class='table table-hover' id="headers-table">
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-primary" name="validateThis" type="button" data-bs-dismiss="modal">Valida</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade popconfirm-modal" tabindex="-1" role="dialog" id="modalEmpty">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nessun URL inserito</h5>
+      </div>
+      <div class="modal-body">
+        <p>Inserire un URL per effettuare la validazione</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" type="button" data-bs-dismiss="modal">Ok</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade popconfirm-modal" tabindex="-1" role="dialog" id="modalNoGET">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Errore</h5>
+      </div>
+      <div class="modal-body">
+        <p id="modalNoGETBodyText"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" type="button" data-bs-dismiss="modal">Ok</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 </html>
