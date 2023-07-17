@@ -14,7 +14,6 @@
     var startTime; // Timer variables
     var elapsedTime;
     var urlRecent = []; // Array that contains the last 5 URLs inserted
-    var okValid = false; // Boolean that checks if the URL is valid
 
     function manageInput() // Function that manages the input 
     {
@@ -42,7 +41,7 @@
         }
 
         // Add the URL to the array
-        if ((urlRecent.length == 5) && (okADD) && (okValid)) {
+        if ((urlRecent.length == 5) && (okADD)) {
           urlRecent.pop();
           urlRecent.unshift(url);
         } else if (okADD) {
@@ -82,7 +81,7 @@
           var endTime = new Date().getTime();
           elapsedTime = endTime - startTime; // Calc the elapsed time
 
-          statusCode = response.status + response.statusText; // Get the status code
+          statusCode = response.status + " " + response.statusText; // Get the status code
 
           return response.text();
         })
@@ -100,8 +99,6 @@
             url.hostname = domain;
             return url.href;
           })
-
-          okValid = true;
 
           // Create the table
           var markup = "<td class='align-middle'>";
@@ -126,7 +123,6 @@
           
         })
         .catch(error => {
-          okValid = false;
           // If the fetch fails, show an error modal
 
           var modalNoGETBodyTextID = document.getElementById("modalNoGETBodyText");
