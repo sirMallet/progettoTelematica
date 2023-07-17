@@ -14,10 +14,9 @@ Per poter far funzionare questa applicazione è necessario disporre di Google Ch
     Nella riga b il percorso alla cartella appena data creata
 
     ES:
-
-    cd C:\Program Files\Google\Chrome\Application
-
-    chrome.exe --user-data-dir="C:\Users\nome-utente\Documents\my\data" --disable-web-security
+    
+        cd C:\Program Files\Google\Chrome\Application
+        chrome.exe --user-data-dir="C:\Users\nome-utente\Documents\my\data" --disable-web-security
 
 6.  Eseguire disable_security.bat
 
