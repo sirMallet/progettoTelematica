@@ -100,6 +100,17 @@
             return url.href;
           })
 
+          // Remove duplicates
+          for (var i = 0; i < linkUrls.length; i++) {
+            for (var j = 0; j < linkUrls.length; j++) {
+              if (linkUrls[i] == linkUrls[j]) {
+                linkUrls.splice(j, 1);
+              }
+            }
+          }
+
+          linkUrls.sort(); // Sort the links
+
           // Create the table
           var markup = "<td class='align-middle'>";
           if ((url.protocol == 'https:') ? markup += "HTTPS Supportato" : markup += "HTTPS non Supportato");
@@ -120,7 +131,7 @@
           }
 
           resultTable.innerHTML = markup;
-          
+
         })
         .catch(error => {
           // If the fetch fails, show an error modal
@@ -207,7 +218,6 @@
 
         error: function(data, textStatus, jqXHR) {
           // If the ajax fails, show an error modal
-
 
           var modalNoGETBodyTextID = document.getElementById("modalNoGETBodyText");
 
